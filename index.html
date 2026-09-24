@@ -62,9 +62,10 @@
     .card{ margin-top:0; padding:20px 20px; }
     .mascot{ font-size:1.8rem; }
     h1{ font-size:1.3rem; margin-bottom:2px; }
-    .operation{ font-size:2.1rem; margin:10px 0; }
+    .operation{ font-size:1.6rem; }
+    .eq-sign{ font-size:1.6rem; }
     .badges-row{ margin-bottom:8px; }
-    .score-row{ margin-bottom:8px; }
+    .stats-bar{ font-size:0.7rem; margin-bottom:2px; }
     .toast-inline{ min-height:1.8rem; margin-bottom:2px; }
     .toast-emoji{ font-size:1.3rem; }
     .toast-title{ font-size:0.85rem; }
@@ -121,23 +122,42 @@
     font-size:1.6rem;
     margin:0 0 6px;
   }
-  .score-row{
+  .stats-bar{
     display:flex;
-    justify-content:space-between;
-    font-size:0.95rem;
-    margin-bottom:18px;
+    justify-content:center;
+    gap:16px;
+    font-size:0.78rem;
+    font-weight:bold;
     color:var(--text);
-    opacity:0.8;
+    opacity:0.55;
+    margin-bottom:4px;
   }
   .operation{
-    font-size:2.6rem;
+    font-size:1.9rem;
     font-weight:bold;
-    margin:20px 0;
-    letter-spacing:2px;
+    letter-spacing:1px;
+    white-space:nowrap;
   }
   .num-a{ color:var(--accent); }
   .num-b{ color:var(--primary); }
-  .op-symbol{ color:var(--text); opacity:0.6; margin:0 4px; }
+  .op-symbol{ color:var(--text); opacity:0.6; margin:0 2px; }
+  .equation-line{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .eq-sign{
+    font-size:1.9rem;
+    font-weight:bold;
+    opacity:0.6;
+  }
+  .cubes-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
   .hint-toggle{
     background:transparent;
     border:2px dashed var(--accent);
@@ -148,7 +168,7 @@
     padding:6px 16px;
     border-radius:14px;
     cursor:pointer;
-    margin:0 0 10px;
+    margin:0;
   }
   .hint-toggle.active{
     background:var(--accent);
@@ -160,17 +180,34 @@
     flex-wrap:wrap;
     justify-content:center;
     align-items:center;
+    align-content:center;
     gap:4px;
-    margin:0 0 14px;
-    min-height:24px;
+    max-width:280px;
+  }
+  .calc-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:0 0 8px;
+  }
+  .calc-row.no-cubes{
+    justify-content:center;
   }
   .cubes-container.visible{
     display:flex;
   }
+  .input-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
   .cube{
-    width:20px;
-    height:20px;
-    border-radius:5px;
+    width:18px;
+    height:18px;
+    border-radius:4px;
     background:var(--accent);
     flex-shrink:0;
   }
@@ -192,19 +229,21 @@
     justify-content:center;
     color:white;
     font-weight:bold;
-    font-size:0.95rem;
+    font-size:0.7rem;
   }
   .cubes-op-symbol{
-    font-size:1.2rem;
+    font-size:1rem;
     font-weight:bold;
-    margin:0 4px;
+    margin:2px 0;
+    flex-basis:100%;
+    text-align:center;
   }
   input[type="number"]{
-    width:140px;
-    font-size:2rem;
+    width:78px;
+    font-size:1.7rem;
     text-align:center;
-    padding:10px;
-    border-radius:16px;
+    padding:8px 4px;
+    border-radius:14px;
     border:3px solid var(--accent);
     background:transparent;
     color:var(--text);
@@ -231,6 +270,9 @@
   }
   button:hover{
     background:var(--primary-dark);
+  }
+  .input-col button{
+    margin:0;
   }
   .feedback{
     margin-top:20px;
@@ -389,6 +431,12 @@
 </head>
 <body>
   <div class="card">
+    <div class="stats-bar">
+      <span>✅ <b id="scoreGood">0</b></span>
+      <span>🔥 <b id="streak">0</b></span>
+      <span>🏆 Niv. <b id="level">1</b></span>
+    </div>
+
     <div class="mascot-row">
       <span class="mascot" id="mascot">🦉</span>
     </div>
@@ -397,14 +445,6 @@
     <div class="mode-switch">
       <button class="mode-btn active" id="modeAdd">➕ Addition</button>
       <button class="mode-btn" id="modeSub">➖ Soustraction</button>
-    </div>
-
-    <div class="score-row">
-      <span>✅ Bonnes réponses : <b id="scoreGood">0</b></span>
-      <span>🔥 Série : <b id="streak">0</b></span>
-    </div>
-    <div class="score-row" style="margin-bottom:0;">
-      <span>🏆 Niveau : <b id="level">1</b></span>
     </div>
 
     <div class="badges-row">
@@ -422,18 +462,25 @@
       </div>
     </div>
 
+    <div class="calc-row">
+      <div class="cubes-col">
+        <button type="button" class="hint-toggle" id="hintToggle">🧊 Je compte avec les cubes</button>
+        <div class="cubes-container" id="cubesContainer"></div>
+      </div>
+      <div class="input-col">
+        <div class="equation-line">
+          <span class="operation" id="operation">-- + --</span>
+          <span class="eq-sign">=</span>
+          <input type="number" id="answer" inputmode="numeric" placeholder="?" autofocus>
+        </div>
+        <button id="validate">Valider</button>
+      </div>
+    </div>
+
     <div class="toast-inline" id="toastInline">
       <div class="toast-emoji" id="toastEmoji"></div>
       <div class="toast-title" id="toastTitle"></div>
     </div>
-
-    <div class="operation" id="operation">-- + --</div>
-
-    <button type="button" class="hint-toggle" id="hintToggle">🧊 Je compte avec les cubes</button>
-    <div class="cubes-container" id="cubesContainer"></div>
-
-    <input type="number" id="answer" inputmode="numeric" placeholder="?" autofocus>
-    <button id="validate">Valider</button>
 
     <div class="feedback" id="feedback"></div>
   </div>
